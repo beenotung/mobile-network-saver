@@ -21,6 +21,9 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 public class MainActivity extends AppCompatActivity
     implements NavigationView.OnNavigationItemSelectedListener {
   private static void SetDebug() {
@@ -83,17 +86,30 @@ public class MainActivity extends AppCompatActivity
         * */
         debug("clicked start button");
         /* 1. */
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo wifiInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo wifiInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         if (wifiInfo.isConnected() && !ignoreWifi) {
           info("skipped: wifi is connected");
           return;
         }
         /* 2. */
-        NetworkInfo mobileInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+        NetworkInfo mobileInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
         if (!mobileInfo.isConnected()) {
           /* 3. */
           info("turning on mobile network");
+          try {
+            Method dataMtd = ConnectivityManager.class.getMethod("setMobileDataEnabled", boolean.class);
+            dataMtd.setAccessible(true);
+            try {
+              dataMtd.invoke(connectivityManager, true);
+            } catch (IllegalAccessException e) {
+              e.printStackTrace();
+            } catch (InvocationTargetException e) {
+              e.printStackTrace();
+            }
+          } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+          }
         }
       }
     });
