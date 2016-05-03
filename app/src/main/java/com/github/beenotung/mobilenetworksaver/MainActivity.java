@@ -1,6 +1,9 @@
 package com.github.beenotung.mobilenetworksaver;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -20,14 +23,28 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity
     implements NavigationView.OnNavigationItemSelectedListener {
+  private static void SetDebug() {
+    ignoreWifi = true;
+  }
+
+  private static boolean ignoreWifi = false;
 
   private static final String TAG = "MainActivity";
   private NavigationView mNavigationView;
   private TextView debug_tv;
 
+  private void info(String msg) {
+    debug_tv.setText("info: " + msg);
+  }
+
+  private void debug(String msg) {
+    debug_tv.setText("debug: " + msg);
+  }
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    SetDebug();
     setContentView(R.layout.activity_main);
     Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
@@ -58,11 +75,26 @@ public class MainActivity extends AppCompatActivity
     start_btn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        debug_tv.setText("starting network");
-        //TODO
-        /* start network */
-        /* set timer */
-        /* close network */
+        /*
+        * 1. check if wifi is on -> skip all
+        * 2. check if mobile network is already on -> skip 3
+        * 3. turn on mobile network
+        * 4. set timer -> turn off mobile network
+        * */
+        debug("clicked start button");
+        /* 1. */
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo wifiInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        if (wifiInfo.isConnected() && !ignoreWifi) {
+          info("skipped: wifi is connected");
+          return;
+        }
+        /* 2. */
+        NetworkInfo mobileInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+        if (!mobileInfo.isConnected()) {
+          /* 3. */
+          info("turning on mobile network");
+        }
       }
     });
 
